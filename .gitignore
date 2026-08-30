@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+*.log
+import.log
+dist/
+build/
+.DS_Store
+coverage/
+.vite/
+*.zip
+scratchpad/
+backend/scripts/_probe.mjs
