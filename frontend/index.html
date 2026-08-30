@@ -3,7 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Skylark Drones · BI Agent</title>
+    <meta name="description" content="Conversational business intelligence over Monday.com — Skylark Drones." />
+    <meta name="theme-color" content="#0e141a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#eef1f3" media="(prefers-color-scheme: light)" />
+    <title>Skylark Signal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      try {
+        const t = localStorage.getItem('sky-theme');
+        // dark is the default look; only an explicit "light" opts out
+        if (t === 'light') document.documentElement.dataset.theme = 'light';
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

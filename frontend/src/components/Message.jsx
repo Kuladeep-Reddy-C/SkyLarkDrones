@@ -1,29 +1,54 @@
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Charts from './Charts.jsx';
+import { Icon } from '../lib/icons.jsx';
 
-export default function Message({ message }) {
+export default function Message({ message, index }) {
   const { role, content, meta, charts } = message;
+  const [copied, setCopied] = useState(false);
   const isUser = role === 'user';
+
+  if (isUser) {
+    return (
+      <div className="msg user" id={`turn-${index}`}>
+        <div className="body">{content}</div>
+      </div>
+    );
+  }
+
+  const copy = () => {
+    navigator.clipboard?.writeText(content || '').then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    });
+  };
+
   return (
-    <div className={`msg ${isUser ? 'user' : 'assistant'}`}>
-      <div className={`bubble ${meta?.error ? 'error' : ''}`}>
-        {isUser ? (
-          <p>{content}</p>
-        ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || ''}</ReactMarkdown>
-        )}
+    <div className="msg assistant">
+      <div className="who">
+        <span className="avatar"><Icon.lark width={13} height={13} /></span>
+        <span className="name">Skylark</span>
       </div>
 
-      {!isUser && charts?.length > 0 && <Charts charts={charts} />}
+      <div className={`prose ${meta?.error ? 'error-text' : ''}`}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || ''}</ReactMarkdown>
+      </div>
 
-      {!isUser && meta && !meta.welcome && (
+      {charts?.length > 0 && <Charts charts={charts} />}
+
+      {meta && !meta.welcome && (
         <div className="msg-meta">
-          {meta.cached && <span title="served from a recent identical question">cached</span>}
-          {meta.model && <span>{meta.model}</span>}
-          {meta.degraded && <span className="warn">degraded mode</span>}
+          {!meta.error && (
+            <button className="copy-btn" onClick={copy}>
+              <Icon.copy width={12} height={12} /> {copied ? 'Copied' : 'Copy'}
+            </button>
+          )}
+          {meta.cached && <span className="tag accent">cached</span>}
+          {meta.model && <span className="tag">{meta.model.replace('openai/', '')}</span>}
+          {meta.degraded && <span className="tag warn">degraded</span>}
           {Array.isArray(meta.tools) && meta.tools.length > 0 && (
-            <span title={meta.tools.map((t) => t.tool).join(', ')}>
+            <span className="tag" title={meta.tools.map((t) => t.tool).join(' · ')}>
               {meta.tools.length} data {meta.tools.length === 1 ? 'call' : 'calls'}
             </span>
           )}

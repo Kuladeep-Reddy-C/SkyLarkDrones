@@ -1,33 +1,44 @@
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell, LabelList,
 } from 'recharts';
 
-const PALETTE = ['#2563eb', '#0f9d58', '#b45309', '#7c3aed', '#db2777', '#0891b2', '#65a30d', '#ea580c'];
+const SERIES = ['var(--accent)', 'var(--sky)', 'var(--ok)', 'var(--warn)', '#7c6aa8', '#4b8a8a', '#9c6f4a', '#6a86a8'];
+
+function TooltipBox({ active, payload, unit }) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0].payload;
+  return (
+    <div style={{
+      background: 'var(--surface)', border: '1px solid var(--line-strong)', borderRadius: 8,
+      padding: '6px 10px', fontSize: 12, boxShadow: 'var(--shadow)', fontFamily: 'var(--font-mono)',
+    }}>
+      <div style={{ color: 'var(--ink-faint)' }}>{p.label}</div>
+      <div style={{ color: 'var(--ink)', fontWeight: 600 }}>{p.value}{unit ? ` ${unit}` : ''}</div>
+    </div>
+  );
+}
 
 function ChartCard({ spec }) {
   const data = spec.data || [];
-  const height = Math.max(180, Math.min(360, data.length * 34 + 40));
+  const height = Math.max(160, Math.min(380, data.length * 32 + 36));
+  const funnel = spec.type === 'funnel';
   return (
     <div className="chart-card">
-      <div className="chart-title">{spec.title}{spec.unit ? ` · ${spec.unit}` : ''}</div>
+      <p className="chart-title">{spec.title}{spec.unit ? ` · ${spec.unit}` : ''}</p>
       <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={data} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
-          <CartesianGrid horizontal={false} stroke="#eee" />
-          <XAxis type="number" tick={{ fontSize: 11 }} />
+        <BarChart data={data} layout="vertical" margin={{ left: 4, right: 34, top: 2, bottom: 2 }} barCategoryGap={funnel ? 2 : 6}>
+          <CartesianGrid horizontal={false} stroke="var(--line)" />
+          <XAxis type="number" tick={{ fontSize: 10 }} stroke="var(--line-strong)" />
           <YAxis
-            type="category"
-            dataKey="label"
-            width={spec.type === 'funnel' ? 150 : 120}
-            tick={{ fontSize: 11 }}
+            type="category" dataKey="label" width={funnel ? 150 : 118}
+            tick={{ fontSize: 11, fill: 'var(--ink-soft)' }} stroke="var(--line-strong)"
           />
-          <Tooltip
-            formatter={(v) => [`${v}${spec.unit ? ` ${spec.unit}` : ''}`, '']}
-            contentStyle={{ fontSize: 12, borderRadius: 8 }}
-          />
-          <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive>
+          <Tooltip cursor={{ fill: 'var(--surface-2)' }} content={<TooltipBox unit={spec.unit} />} />
+          <Bar dataKey="value" radius={[0, 5, 5, 0]} maxBarSize={26} animationDuration={750} animationEasing="ease-out">
             {data.map((_, i) => (
-              <Cell key={i} fill={spec.type === 'funnel' ? PALETTE[0] : PALETTE[i % PALETTE.length]} />
+              <Cell key={i} fill={funnel ? 'var(--accent)' : SERIES[i % SERIES.length]} fillOpacity={funnel ? 1 - i * 0.05 : 0.92} />
             ))}
+            <LabelList dataKey="value" position="right" style={{ fill: 'var(--ink-faint)', fontSize: 10, fontFamily: 'var(--font-mono)' }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -37,9 +48,5 @@ function ChartCard({ spec }) {
 
 export default function Charts({ charts }) {
   if (!charts?.length) return null;
-  return (
-    <div className="charts">
-      {charts.map((c, i) => <ChartCard key={i} spec={c} />)}
-    </div>
-  );
+  return <div className="charts">{charts.map((c, i) => <ChartCard key={i} spec={c} />)}</div>;
 }
