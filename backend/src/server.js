@@ -14,14 +14,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 app.use(express.json({ limit: '1mb' }));
+
+const allowlist = config.server.corsOrigins;
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // curl / same-origin / server-to-server
+  if (allowlist.includes('*') || allowlist.includes(origin)) return true;
+  try {
+    const { hostname } = new URL(origin);
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+    if (hostname.endsWith('.vercel.app')) return true; // preview + prod deploys
+  } catch { /* malformed origin */ }
+  return false;
+}
 app.use(
   cors({
-    origin(origin, cb) {
-      if (!origin || config.server.corsOrigins.includes(origin) || config.server.corsOrigins.includes('*')) {
-        return cb(null, true);
-      }
-      return cb(null, false);
-    },
+    origin: (origin, cb) => cb(null, isAllowedOrigin(origin)),
   }),
 );
 
