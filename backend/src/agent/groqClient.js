@@ -1,7 +1,9 @@
 import Groq from 'groq-sdk';
 import { config, hasLLM } from '../config.js';
 
-export const groq = hasLLM ? new Groq({ apiKey: config.groq.apiKey }) : null;
+export const groq = hasLLM
+  ? new Groq({ apiKey: config.groq.apiKey, timeout: 45000, maxRetries: 2 })
+  : null;
 
 /**
  * Chat completion with automatic fallback to the smaller model if the primary

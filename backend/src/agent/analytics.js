@@ -9,27 +9,64 @@ function valueOf(row, field) {
   return v;
 }
 
+const norm = (x) => (typeof x === 'string' ? x.trim().toLowerCase() : x);
+
+/** Strict numeric parse — null/''/non-numeric -> null (never 0). */
+const num = (x) => {
+  if (x === null || x === undefined || x === '') return null;
+  if (typeof x === 'number') return Number.isFinite(x) ? x : null;
+  const s = String(x).replace(/[₹$,\s]/g, '');
+  if (!/^-?\d*\.?\d+$/.test(s)) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+};
+
+const isDateish = (x) => typeof x === 'string' && /^\d{4}-\d{2}(-\d{2})?/.test(x);
+
+/**
+ * Ordered comparison that works for both numbers and ISO date strings.
+ * Returns null when either side is missing / incomparable (=> filter fails).
+ */
+function cmp(a, b) {
+  if (a === null || a === undefined || a === '') return null;
+  if (b === null || b === undefined || b === '') return null;
+  const na = num(a);
+  const nb = num(b);
+  if (na !== null && nb !== null) return na - nb;
+  if (isDateish(a) || isDateish(b)) {
+    const sa = String(a).slice(0, 10);
+    const sb = String(b).slice(0, 10);
+    return sa < sb ? -1 : sa > sb ? 1 : 0;
+  }
+  return null;
+}
+
+const toRange = (b) => {
+  if (Array.isArray(b)) return b;
+  if (typeof b === 'string') return b.split(/\s*(?:,|\.\.|to|\s)\s*/).filter(Boolean);
+  return [];
+};
+
 const OPS = {
   eq: (a, b) => norm(a) === norm(b),
   ne: (a, b) => norm(a) !== norm(b),
-  in: (a, b) => Array.isArray(b) && b.map(norm).includes(norm(a)),
-  nin: (a, b) => Array.isArray(b) && !b.map(norm).includes(norm(a)),
+  in: (a, b) => toRange(b).map(norm).includes(norm(a)),
+  nin: (a, b) => a != null && a !== '' && !toRange(b).map(norm).includes(norm(a)),
   contains: (a, b) => a != null && String(a).toLowerCase().includes(String(b).toLowerCase()),
-  gt: (a, b) => num(a) != null && num(a) > num(b),
-  gte: (a, b) => num(a) != null && num(a) >= num(b),
-  lt: (a, b) => num(a) != null && num(a) < num(b),
-  lte: (a, b) => num(a) != null && num(a) <= num(b),
-  between: (a, b) => num(a) != null && Array.isArray(b) && num(a) >= num(b[0]) && num(a) <= num(b[1]),
-  before: (a, b) => a != null && String(a) < String(b),
-  after: (a, b) => a != null && String(a) > String(b),
-  is_null: (a) => a == null || a === '',
-  not_null: (a) => a != null && a !== '',
-};
-
-const norm = (x) => (typeof x === 'string' ? x.trim().toLowerCase() : x);
-const num = (x) => {
-  const n = typeof x === 'number' ? x : Number(String(x).replace(/[^0-9.\-]/g, ''));
-  return Number.isFinite(n) ? n : null;
+  gt: (a, b) => cmp(a, b) > 0,
+  gte: (a, b) => cmp(a, b) >= 0,
+  lt: (a, b) => { const c = cmp(a, b); return c !== null && c < 0; },
+  lte: (a, b) => { const c = cmp(a, b); return c !== null && c <= 0; },
+  between: (a, b) => {
+    const [lo, hi] = toRange(b);
+    const c1 = cmp(a, lo);
+    const c2 = cmp(a, hi);
+    return c1 !== null && c2 !== null && c1 >= 0 && c2 <= 0;
+  },
+  before: (a, b) => { const c = cmp(a, b); return c !== null && c < 0; },
+  after: (a, b) => cmp(a, b) > 0,
+  is_null: (a) => a === null || a === undefined || a === '',
+  not_null: (a) => a !== null && a !== undefined && a !== '',
 };
 
 export function applyFilters(rows, filters = []) {

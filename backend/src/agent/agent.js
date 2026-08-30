@@ -3,7 +3,7 @@ import { toolDefinitions, executeTool } from './tools.js';
 import { SYSTEM_PROMPT } from './systemPrompt.js';
 import { log } from '../logger.js';
 
-const MAX_STEPS = 6;
+const MAX_STEPS = 5;
 
 /**
  * Run one agent turn.
@@ -23,6 +23,7 @@ export async function runAgent(history, userMessage, systemPrompt = SYSTEM_PROMP
   let modelUsed = '';
 
   for (let step = 0; step < MAX_STEPS; step += 1) {
+    const t0 = Date.now();
     const res = await chat({
       messages,
       tools: toolDefinitions,
@@ -30,6 +31,7 @@ export async function runAgent(history, userMessage, systemPrompt = SYSTEM_PROMP
       temperature: 0.2,
       max_tokens: 1500,
     });
+    log.debug(`agent step ${step + 1}: LLM ${Date.now() - t0}ms`);
     modelUsed = res.model || modelUsed;
     const choice = res.choices?.[0];
     const msg = choice?.message;

@@ -30,11 +30,14 @@ router.post('/', async (req, res) => {
 
   const conv = ensureConversation(conversationId);
   const history = historyFor(conv.id);
+  const started = Date.now();
+  log.info(`chat[${conv.id}] "${message.trim().slice(0, 80)}"`);
 
   try {
     let payload;
     if (hasLLM) {
       const result = await runAgent(history, message.trim());
+      log.info(`chat[${conv.id}] answered in ${Date.now() - started}ms (${result.steps} steps, ${result.toolTrace.length} tool calls)`);
       payload = {
         conversationId: conv.id,
         reply: result.reply,
