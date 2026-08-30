@@ -91,7 +91,10 @@ button { font-family: inherit; cursor: pointer; color: inherit; }
 
 /* ---- ambient background: telemetry grid + corner glow ------------------ */
 .shell {
-  display: grid; grid-template-columns: var(--rail-w) 1fr; height: 100%;
+  display: grid;
+  grid-template-columns: var(--rail-w) 1fr;
+  grid-template-rows: minmax(0, 1fr);   /* pin row to viewport so panes can scroll internally */
+  height: 100%;
   position: relative; isolation: isolate;
 }
 .shell::before {
@@ -117,7 +120,7 @@ button { font-family: inherit; cursor: pointer; color: inherit; }
   backdrop-filter: blur(10px);
   border-right: 1px solid var(--line);
   display: flex; flex-direction: column;
-  padding: 16px 12px; gap: 5px; min-width: 0;
+  padding: 16px 12px; gap: 5px; min-width: 0; min-height: 0;
 }
 .rail-brand { display: flex; align-items: center; gap: 11px; padding: 6px 8px 16px; }
 .rail-brand .mark {
@@ -142,7 +145,7 @@ button { font-family: inherit; cursor: pointer; color: inherit; }
 .rail-btn svg { color: var(--accent); }
 
 .rail-section { margin-top: 18px; padding: 0 9px 4px; }
-.rail-list { display: flex; flex-direction: column; gap: 1px; overflow-y: auto; flex: 1; margin: 3px -4px 0; padding: 0 4px; }
+.rail-list { display: flex; flex-direction: column; gap: 1px; overflow-y: auto; flex: 1; min-height: 0; margin: 3px -4px 0; padding: 0 4px; }
 .rail-item {
   display: block; width: 100%; text-align: left; border: none; background: none;
   padding: 7px 11px; color: var(--ink-soft); font-size: 12px;
@@ -174,7 +177,7 @@ button { font-family: inherit; cursor: pointer; color: inherit; }
 @keyframes ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 60%, transparent); } 70%, 100% { box-shadow: 0 0 0 7px transparent; } }
 
 /* ---- Workspace ------------------------------------------------------ */
-.workspace { display: flex; flex-direction: column; min-width: 0; position: relative; }
+.workspace { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; position: relative; overflow: hidden; }
 
 .topbar {
   display: flex; align-items: center; gap: 12px; padding: 12px 24px;
@@ -196,7 +199,8 @@ button { font-family: inherit; cursor: pointer; color: inherit; }
 .snapshot-chip button { border: none; background: none; color: var(--accent); font-size: 10.5px; padding: 0; display: inline-flex; align-items: center; }
 .snapshot-chip button:hover { color: var(--accent-bright); }
 
-.thread { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+.thread { flex: 1; min-height: 0; overflow-y: auto; scroll-behavior: smooth; }
+.composer-wrap { flex: none; }
 .thread-inner { max-width: var(--thread-max); margin: 0 auto; padding: 34px 24px 44px; display: flex; flex-direction: column; gap: 24px; }
 
 /* ---- Empty state + radar motif ----------------------------------- */
