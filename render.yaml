@@ -1,0 +1,33 @@
+# Render blueprint for the backend API (Vercel hosts the frontend separately).
+# Create a new Blueprint instance from this repo, then set the `sync: false`
+# secrets in the Render dashboard.
+services:
+  - type: web
+    name: skylark-bi-agent-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/data/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: MONDAY_API_TOKEN
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: MONDAY_API_VERSION
+        value: "2024-10"
+      - key: MONDAY_DEALS_BOARD_ID
+        sync: false
+      - key: MONDAY_WORK_ORDERS_BOARD_ID
+        sync: false
+      - key: DATA_CACHE_TTL_SECONDS
+        value: "300"
+      # Comma-separated list of allowed frontend origins (your Vercel URL)
+      - key: CORS_ORIGINS
+        sync: false
