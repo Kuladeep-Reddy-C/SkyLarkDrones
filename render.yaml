@@ -9,11 +9,11 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
-    healthCheckPath: /api/data/health
+    healthCheckPath: /healthz
     autoDeploy: true
     envVars:
       - key: NODE_VERSION
-        value: 20
+        value: 22
       - key: MONDAY_API_TOKEN
         sync: false
       - key: GROQ_API_KEY

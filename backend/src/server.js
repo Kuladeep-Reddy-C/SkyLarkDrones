@@ -29,6 +29,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/report', reportRoutes);
 
+app.get('/healthz', (_req, res) => res.status(200).send('ok'));
+
 app.get('/api', (_req, res) => {
   res.json({
     name: 'Skylark Drones BI Agent API',
