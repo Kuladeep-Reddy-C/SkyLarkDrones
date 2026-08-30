@@ -12,11 +12,12 @@ import {
 import type { TooltipProps } from 'recharts';
 import type { ChartSpec } from '../types.ts';
 
+// Explicit hex fallbacks — a missing CSS var makes SVG `fill` invalid → renders black.
 const SERIES = [
-  'var(--accent)',
-  'var(--sky)',
-  'var(--ok)',
-  'var(--warn)',
+  'var(--accent, #f5a524)',
+  'var(--teal, #2dd4bf)',
+  'var(--ok, #34d399)',
+  'var(--warn, #fbbf24)',
   '#7c6aa8',
   '#4b8a8a',
   '#9c6f4a',
@@ -84,7 +85,7 @@ function ChartCard({ spec }: { spec: ChartSpec }) {
             {data.map((_, i) => (
               <Cell
                 key={i}
-                fill={funnel ? 'var(--accent)' : SERIES[i % SERIES.length]}
+                fill={funnel ? 'var(--accent, #f5a524)' : SERIES[i % SERIES.length]}
                 fillOpacity={funnel ? 1 - i * 0.05 : 0.92}
               />
             ))}

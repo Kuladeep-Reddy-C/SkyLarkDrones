@@ -38,6 +38,19 @@ app.get('/healthz', (_req: Request, res: Response) => {
   res.status(200).send('ok');
 });
 
+// Root — a 200 for uptime monitors / anyone hitting the bare API host.
+const startedAt = new Date().toISOString();
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    service: 'Skylark Signal — Monday.com BI Agent API',
+    status: 'ok',
+    startedAt,
+    app: 'https://sky-lark-drones-kulli.vercel.app',
+    docs: '/api',
+    health: '/healthz',
+  });
+});
+
 app.get('/api', (_req: Request, res: Response) => {
   res.json({
     name: 'Skylark Drones BI Agent API',
