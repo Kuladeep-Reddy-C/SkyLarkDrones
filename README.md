@@ -6,6 +6,17 @@ Monday.com boards — **Deals** (sales pipeline) and **Work Orders** (project
 execution) — normalising the real-world messiness, and returning insight, not
 just numbers.
 
+## Live demo
+
+| | URL |
+|---|---|
+| **App** (Vercel) | https://sky-lark-drones-kulli.vercel.app |
+| **API** (Render) | https://skylarkdrones-shbc.onrender.com/api |
+
+> The API runs on Render's free tier — it sleeps after 15 min idle, so the first
+> request (or the first question after a pause) can take ~40s to wake. Subsequent
+> requests are fast.
+
 > Built for the Skylark Drones full-stack assignment. Stack: **MERN-ish** — React
 > (frontend), Express + Node (backend), Monday.com as the system of record, Groq
 > for the LLM. MongoDB is intentionally **not** used (see the Decision Log).
