@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { z } from 'zod';
+import { ChatBody } from './schemas.js';
 import { runAgent } from '../agent/agent.js';
 import { ensureConversation, appendTurn, historyFor } from '../conversations.js';
 import { hasLLM } from '../config.js';
@@ -9,12 +9,6 @@ import { log } from '../logger.js';
 import type { AgentEvent } from '../types.js';
 
 const router = Router();
-
-export const ChatBody = z.object({
-  message: z.string().trim().min(1, 'message is required').max(2000),
-  // the client sends `null` before a conversation exists
-  conversationId: z.string().nullish(),
-});
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);

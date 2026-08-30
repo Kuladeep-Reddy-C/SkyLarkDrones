@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { ChatBody } from './chat.js';
+import { ChatBody } from './schemas.js';
 
 describe('ChatBody schema', () => {
   it('accepts a null conversationId (client sends null before a conversation exists)', () => {
-    const r = ChatBody.safeParse({ message: 'hlo', conversationId: null });
-    expect(r.success).toBe(true);
+    expect(ChatBody.safeParse({ message: 'hlo', conversationId: null }).success).toBe(true);
   });
   it('accepts an omitted conversationId', () => {
     expect(ChatBody.safeParse({ message: 'hlo' }).success).toBe(true);
