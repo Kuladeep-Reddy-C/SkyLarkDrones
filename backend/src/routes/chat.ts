@@ -10,9 +10,10 @@ import type { AgentEvent } from '../types.js';
 
 const router = Router();
 
-const ChatBody = z.object({
+export const ChatBody = z.object({
   message: z.string().trim().min(1, 'message is required').max(2000),
-  conversationId: z.string().optional(),
+  // the client sends `null` before a conversation exists
+  conversationId: z.string().nullish(),
 });
 
 function errMessage(err: unknown): string {

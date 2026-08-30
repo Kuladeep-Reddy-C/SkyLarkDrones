@@ -29,7 +29,7 @@ export function getConversation(id: string): Conversation | null {
   return conversations.get(id) ?? null;
 }
 
-export function ensureConversation(id?: string): Conversation {
+export function ensureConversation(id?: string | null): Conversation {
   if (id && conversations.has(id)) return conversations.get(id)!;
   return conversations.get(createConversation())!;
 }
