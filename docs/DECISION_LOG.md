@@ -58,19 +58,29 @@ Update" button in the UI.
 - **Caveats are attached to the report**, so a leadership number is never shown
   without its "…but 75% of open deals have no probability" context.
 
+## Engineering / code quality
+
+- **Full TypeScript** across both workspaces (`strict`), npm-workspaces monorepo,
+  ESLint (flat, typescript-eslint) + Prettier, **Vitest** unit tests (41: field
+  normalisation, the query engine's null-handling regressions, chart unit
+  scaling, SSE frame parsing), and **GitHub Actions CI** running
+  format → lint → typecheck → test → build on every push.
+- The backend runs on `tsx` in dev and a `tsc` `dist/` build in prod.
+- `backend/src/types.ts` is the single source of truth for the domain + wire
+  types; the frontend mirrors the wire contract.
+
 ## What I'd do differently / next with more time
 
 - **Persist a rolling snapshot** (SQLite/Redis) so trends ("pipeline vs last
   month") are possible — the current data is a single point in time.
-- **Streaming responses** (SSE) so the agent's answer and tool steps appear live.
-- **A proper eval set** — 20–30 founder questions with expected numbers, run in
-  CI against a fixture snapshot.
+- **Token-level answer streaming** — the trace + answer stream now, but the final
+  text still arrives in one SSE frame.
+- **Eval set** — 20–30 founder questions with expected numbers, run in CI against
+  a recorded fixture snapshot (the current tests use synthetic rows).
 - **Tighter cross-board matching** — investigate whether deal row order maps to
   `SDPLDEAL-NNN` serials; if so, enable true deal-to-work-order lineage.
-- **Charts in the leadership report** (pipeline funnel, collections waterfall).
 - **Auth** on the hosted prototype and per-user Monday tokens instead of one
   service token.
 - **Write-back** (currently read-only): e.g. the agent flags stale deals back to
   Monday as an update.
-- **Richer clarification** — currently the agent asks one question when ambiguous;
-  a short slot-filling flow would be better for vague asks.
+- **Richer clarification** — a short slot-filling flow for genuinely vague asks.

@@ -1,25 +1,37 @@
 {
-  "name": "skylark-bi-agent-backend",
+  "name": "@skylark/backend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Monday.com Business Intelligence Agent - API + agent orchestration",
+  "description": "Monday.com BI agent — API + agent orchestration + ETL",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "import": "node scripts/importToMonday.js",
-    "inspect": "node scripts/inspectBoards.js",
-    "smoke": "node scripts/smoke.js"
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "import": "tsx scripts/importToMonday.ts",
+    "smoke": "tsx scripts/smoke.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "groq-sdk": "^0.9.1",
     "nanoid": "^5.0.9",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }

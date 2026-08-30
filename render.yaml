@@ -1,14 +1,18 @@
 # Render blueprint for the backend API (Vercel hosts the frontend separately).
-# Create a new Blueprint instance from this repo, then set the `sync: false`
-# secrets in the Render dashboard.
+#
+# This is a monorepo with npm workspaces, so builds run from the repo ROOT.
+# If you created the service manually instead of from this blueprint, set:
+#   Root Directory : (leave blank)
+#   Build Command  : npm install --include=dev && npm run build --workspace backend
+#   Start Command  : node backend/dist/server.js
 services:
   - type: web
-    name: skylark-bi-agent-api
+    name: skylark-signal-api
     runtime: node
     plan: free
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: npm start
+    rootDir: .
+    buildCommand: npm install --include=dev && npm run build --workspace backend
+    startCommand: node backend/dist/server.js
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
@@ -19,15 +23,20 @@ services:
       - key: GROQ_API_KEY
         sync: false
       - key: GROQ_MODEL
-        value: openai/gpt-oss-120b
+        value: openai/gpt-oss-20b
       - key: MONDAY_API_VERSION
-        value: "2024-10"
+        value: '2024-10'
       - key: MONDAY_DEALS_BOARD_ID
         sync: false
       - key: MONDAY_WORK_ORDERS_BOARD_ID
         sync: false
       - key: DATA_CACHE_TTL_SECONDS
-        value: "300"
-      # Comma-separated list of allowed frontend origins (your Vercel URL)
+        value: '300'
+      # Comma-separated list of allowed frontend origins (your Vercel URL).
+      # "*" or any *.vercel.app is also accepted by the CORS layer.
       - key: CORS_ORIGINS
+        sync: false
+      # Optional: set to https://<this-service>.onrender.com/healthz to self-ping
+      # and avoid free-tier cold starts.
+      - key: KEEP_WARM_URL
         sync: false
