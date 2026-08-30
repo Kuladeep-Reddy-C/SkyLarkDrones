@@ -12,9 +12,9 @@ export const groq = hasLLM
  */
 export async function chat(params) {
   if (!groq) throw new Error('LLM is not configured (GROQ_API_KEY missing)');
-  const models = [config.groq.model, config.groq.fallbackModel].filter(
-    (m, i, a) => m && a.indexOf(m) === i,
-  );
+  // Always keep a known-good, generous-limit model at the end of the chain.
+  const models = [config.groq.model, config.groq.fallbackModel, 'openai/gpt-oss-20b']
+    .filter((m, i, a) => m && a.indexOf(m) === i);
   let lastErr;
   for (let i = 0; i < models.length; i += 1) {
     const model = models[i];
