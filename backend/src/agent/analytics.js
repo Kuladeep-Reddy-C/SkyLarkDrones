@@ -88,13 +88,13 @@ export function aggregate(rows, { groupBy = null, metric = null, op = 'count' } 
     groups.get(key).push(row);
   }
 
+  const isMoney = metric && op !== 'count' && op !== 'count_distinct' && MONEY_FIELD.test(metric);
   const out = [];
   for (const [key, groupRows] of groups) {
-    out.push({
-      group: key,
-      count: groupRows.length,
-      value: computeMetric(groupRows, metric, op),
-    });
+    const value = computeMetric(groupRows, metric, op);
+    const row = { group: key, count: groupRows.length, value };
+    if (isMoney && value !== null) row.valueFormatted = fmtINR(value);
+    out.push(row);
   }
   out.sort((a, b) => (b.value ?? b.count) - (a.value ?? a.count));
   return { groupBy, metric, op, groups: out };
@@ -118,6 +118,17 @@ function computeMetric(rows, metric, op) {
 
 const round = (n) => Math.round(n * 100) / 100;
 
+/** Format an INR amount the way the answer should read it (Cr / L / plain). */
+export function fmtINR(n) {
+  if (n === null || n === undefined || Number.isNaN(n)) return null;
+  const abs = Math.abs(n);
+  if (abs >= 1e7) return `₹${round(n / 1e7)} Cr`;
+  if (abs >= 1e5) return `₹${round(n / 1e5)} L`;
+  return `₹${Math.round(n).toLocaleString('en-IN')}`;
+}
+
+const MONEY_FIELD = /value|amount|receivable|billed|collected|gst|pipeline|weighted/i;
+
 /** Weighted pipeline value: sum(value * probability), default prob for blanks. */
 export function weightedPipeline(deals, defaultProb = 0.3) {
   let weighted = 0;
@@ -133,7 +144,15 @@ export function weightedPipeline(deals, defaultProb = 0.3) {
     }
     weighted += d.dealValue * p;
   }
-  return { weighted: round(weighted), raw: round(raw), count: deals.length, missingProb, defaultProb };
+  return {
+    weighted: round(weighted),
+    raw: round(raw),
+    weightedFormatted: fmtINR(weighted),
+    rawFormatted: fmtINR(raw),
+    count: deals.length,
+    missingProb,
+    defaultProb,
+  };
 }
 
 export function summarize(rows, fields) {

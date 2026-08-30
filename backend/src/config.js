@@ -26,8 +26,10 @@ export const config = {
   },
   groq: {
     apiKey: optional('GROQ_API_KEY'),
-    model: optional('GROQ_MODEL', 'openai/gpt-oss-120b'),
-    fallbackModel: optional('GROQ_FALLBACK_MODEL', 'openai/gpt-oss-20b'),
+    // 20b is the default: fast and comfortably inside Groq's free tokens/min
+    // budget for a multi-step agent. 120b is the fallback / manual upgrade.
+    model: optional('GROQ_MODEL', 'openai/gpt-oss-20b'),
+    fallbackModel: optional('GROQ_FALLBACK_MODEL', 'openai/gpt-oss-120b'),
   },
   server: {
     port: Number(optional('PORT', '8080')),

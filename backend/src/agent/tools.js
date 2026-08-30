@@ -3,7 +3,21 @@
  * (which is refreshed from Monday.com on a TTL). Tool results are plain JSON.
  */
 import { getSnapshot, cacheAgeSeconds } from '../data/store.js';
-import { applyFilters, aggregate, weightedPipeline, summarize } from './analytics.js';
+import { applyFilters, aggregate, weightedPipeline, summarize, fmtINR } from './analytics.js';
+
+const MONEY_KEY = /value|amount|receivable|billed|collected|gst/i;
+/** Attach a "<field>_fmt" (₹ Cr/L) next to every money field so the LLM never scales it. */
+function withFormattedMoney(rows) {
+  return rows.map((row) => {
+    const out = { ...row };
+    for (const [k, v] of Object.entries(row)) {
+      if (typeof v === 'number' && MONEY_KEY.test(k) && !/pct|rank|count/i.test(k)) {
+        out[`${k}_fmt`] = fmtINR(v);
+      }
+    }
+    return out;
+  });
+}
 
 const DEAL_FIELDS = {
   name: 'string — masked deal name',
@@ -228,7 +242,7 @@ export async function executeTool(name, args = {}) {
         board: args.board,
         totalMatches: filtered.length,
         returned: Math.min(filtered.length, limit),
-        rows: summarize(filtered.slice(0, limit), fields),
+        rows: withFormattedMoney(summarize(filtered.slice(0, limit), fields)),
       };
     }
 

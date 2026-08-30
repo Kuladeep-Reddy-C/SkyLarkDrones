@@ -76,4 +76,14 @@ app.listen(config.server.port, () => {
     (s) => log.info(`Snapshot warm: ${s.counts.deals} deals, ${s.counts.workOrders} work orders`),
     (e) => log.warn(`Initial snapshot failed (will retry on first request): ${e.message}`),
   );
+
+  // Optional self-ping to keep a free-tier host awake (set KEEP_WARM_URL to the
+  // public /healthz URL). Harmless if unset.
+  const warmUrl = process.env.KEEP_WARM_URL;
+  if (warmUrl) {
+    setInterval(() => {
+      fetch(warmUrl).catch(() => {});
+    }, 10 * 60 * 1000).unref();
+    log.info(`Keep-warm ping every 10m -> ${warmUrl}`);
+  }
 });

@@ -8,26 +8,26 @@ import { log } from '../logger.js';
 
 const router = Router();
 
-/** Minimal deterministic answer used when the LLM is unavailable. */
+/** Deterministic answer used when the LLM is unavailable. */
 async function fallbackAnswer(message) {
   const snap = await getSnapshot();
   const open = snap.deals.filter((d) => d.dealStatus === 'Open');
   const p = weightedPipeline(open);
   return (
-    `⚠️ The language model is currently unavailable, so here is a direct data summary instead of a conversational answer.\n\n` +
+    `⚠️ The language model is currently unavailable, so here is a direct data summary.\n\n` +
     `- Deals: ${snap.counts.deals} (open: ${open.length}, open pipeline ₹${p.raw.toLocaleString('en-IN')}, weighted ₹${p.weighted.toLocaleString('en-IN')})\n` +
     `- Work orders: ${snap.counts.workOrders}\n` +
     `- Data caveats: ${snap.quality.notes.join(' ') || 'none'}\n\n` +
-    `Your question was: "${message}". Please retry shortly for a full answer.`
+    `Your question: "${message}". Please retry shortly for a full answer.`
   );
 }
 
+// ---- Non-streaming --------------------------------------------------------
 router.post('/', async (req, res) => {
   const { message, conversationId } = req.body || {};
   if (!message || typeof message !== 'string' || !message.trim()) {
     return res.status(400).json({ error: 'message is required' });
   }
-
   const conv = ensureConversation(conversationId);
   const history = historyFor(conv.id);
   const started = Date.now();
@@ -36,21 +36,12 @@ router.post('/', async (req, res) => {
   try {
     let payload;
     if (hasLLM) {
-      const result = await runAgent(history, message.trim());
-      log.info(`chat[${conv.id}] answered in ${Date.now() - started}ms (${result.steps} steps, ${result.toolTrace.length} tool calls)`);
-      payload = {
-        conversationId: conv.id,
-        reply: result.reply,
-        meta: { model: result.model, steps: result.steps, tools: result.toolTrace },
-      };
+      const r = await runAgent(history, message.trim());
+      log.info(`chat[${conv.id}] answered in ${Date.now() - started}ms (${r.steps} steps${r.cached ? ', cached' : ''})`);
+      payload = { conversationId: conv.id, reply: r.reply, charts: r.charts || [], meta: { ...r.meta, cached: r.cached } };
     } else {
-      payload = {
-        conversationId: conv.id,
-        reply: await fallbackAnswer(message.trim()),
-        meta: { model: null, degraded: true },
-      };
+      payload = { conversationId: conv.id, reply: await fallbackAnswer(message.trim()), charts: [], meta: { degraded: true } };
     }
-
     appendTurn(conv.id, 'user', message.trim());
     appendTurn(conv.id, 'assistant', payload.reply);
     return res.json(payload);
@@ -60,14 +51,61 @@ router.post('/', async (req, res) => {
       const reply = await fallbackAnswer(message.trim());
       appendTurn(conv.id, 'user', message.trim());
       appendTurn(conv.id, 'assistant', reply);
-      return res.json({ conversationId: conv.id, reply, meta: { degraded: true, error: err.message } });
+      return res.json({ conversationId: conv.id, reply, charts: [], meta: { degraded: true, error: err.message } });
     } catch (err2) {
-      return res.status(502).json({
-        error: 'The agent could not complete this request.',
-        detail: err.message,
-        dataError: err2.message,
-      });
+      return res.status(502).json({ error: 'The agent could not complete this request.', detail: err.message, dataError: err2.message });
     }
+  }
+});
+
+// ---- Streaming (Server-Sent Events) --------------------------------------
+router.post('/stream', async (req, res) => {
+  const { message, conversationId } = req.body || {};
+  if (!message || typeof message !== 'string' || !message.trim()) {
+    return res.status(400).json({ error: 'message is required' });
+  }
+  const conv = ensureConversation(conversationId);
+  const history = historyFor(conv.id);
+  const started = Date.now();
+  log.info(`chat[${conv.id}] (stream) "${message.trim().slice(0, 80)}"`);
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+  send({ type: 'conversation', conversationId: conv.id });
+  const heartbeat = setInterval(() => res.write(': ping\n\n'), 15000);
+
+  let finalReply = '';
+  try {
+    if (!hasLLM) {
+      finalReply = await fallbackAnswer(message.trim());
+      send({ type: 'answer', text: finalReply });
+      send({ type: 'done', meta: { degraded: true } });
+    } else {
+      const r = await runAgent(history, message.trim(), { onEvent: send });
+      finalReply = r.reply;
+      log.info(`chat[${conv.id}] (stream) done in ${Date.now() - started}ms${r.cached ? ' (cached)' : ''}`);
+    }
+    appendTurn(conv.id, 'user', message.trim());
+    appendTurn(conv.id, 'assistant', finalReply);
+  } catch (err) {
+    log.error('chat stream error:', err.stack || err.message);
+    try {
+      finalReply = await fallbackAnswer(message.trim());
+      send({ type: 'answer', text: finalReply });
+      send({ type: 'done', meta: { degraded: true, error: err.message } });
+      appendTurn(conv.id, 'user', message.trim());
+      appendTurn(conv.id, 'assistant', finalReply);
+    } catch (err2) {
+      send({ type: 'error', error: err.message, dataError: err2.message });
+    }
+  } finally {
+    clearInterval(heartbeat);
+    res.end();
   }
 });
 
