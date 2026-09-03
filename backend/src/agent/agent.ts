@@ -115,6 +115,7 @@ export async function runAgent(
   const toolTrace: ToolCallTrace[] = [];
   let modelUsed = '';
 
+  // Keep the orchestration bounded so a model cannot create an unending tool loop.
   for (let step = 0; step < MAX_STEPS; step += 1) {
     const t0 = Date.now();
     const res = await chat({

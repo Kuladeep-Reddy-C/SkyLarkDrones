@@ -62,6 +62,7 @@ async function resolveBoardIds(): Promise<{ dealsId: string; woId: string }> {
 async function fetchAllItems(boardId: string): Promise<MondayItem[]> {
   const items: MondayItem[] = [];
   let cursor: string | null = null;
+  // Monday returns a cursor for each page; continue until the cursor is exhausted.
   do {
     const data: { boards: { items_page: { cursor: string | null; items: MondayItem[] } }[] } =
       await mondayRequest(

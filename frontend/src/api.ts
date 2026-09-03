@@ -39,6 +39,7 @@ async function chatStream(
     const { value, done } = await reader.read();
     if (done) break;
     buf += decoder.decode(value, { stream: true });
+    // A network chunk can split an SSE frame, so retain the incomplete tail.
     const parts = buf.split('\n\n');
     buf = parts.pop() ?? '';
     for (const part of parts) {
